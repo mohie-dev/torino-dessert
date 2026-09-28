@@ -1,6 +1,6 @@
-import { Entity, Column } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity.js';
-import { UserRole } from '../../../utils/enums.js';
+import { Role } from './role.entity.js';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -16,8 +16,14 @@ export class User extends BaseEntity {
     @Column({ name: 'password_hash', type: 'varchar', length: 255 })
     passwordHash: string;
 
-    @Column({ type: 'enum', enum: UserRole, default: UserRole.STAFF })
-    role: UserRole;
+    @Column({ name: 'role_id', type: 'uuid' })
+    roleId: string;
+
+    @ManyToOne(() => Role, (role) => role.users, {
+        onDelete: 'RESTRICT',
+    })
+    @JoinColumn({ name: 'role_id' })
+    role: Role;
 
     @Column({ name: 'is_active', type: 'boolean', default: true })
     isActive: boolean;

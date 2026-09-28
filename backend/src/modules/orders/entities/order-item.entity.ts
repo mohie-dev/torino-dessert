@@ -10,7 +10,7 @@ export class OrderItem {
     @Column({ name: 'order_id', type: 'uuid' })
     orderId: string;
 
-    @Column({ name: 'product_id', type: 'uuid', nullable: true }) // nullable عشان لو المنتج اتمسح خالص
+    @Column({ name: 'product_id', type: 'uuid', nullable: true })
     productId: string;
 
     // --- Snapshots ---
@@ -30,7 +30,6 @@ export class OrderItem {
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 
-    // العلاقات
     @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'order_id' })
     order: Order;

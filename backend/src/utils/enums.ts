@@ -1,19 +1,14 @@
-export enum UserRole {
-    ADMIN = 'ADMIN',
-    STAFF = 'STAFF',
-}
-
 export enum OrderStatus {
     PENDING = 'PENDING',
+    CONFIRMED = 'CONFIRMED',
     PREPARING = 'PREPARING',
-    READY = 'READY',
-    DELIVERED = 'DELIVERED',
+    OUT_FOR_DELIVERY = 'OUT_FOR_DELIVERY',
+    COMPLETED = 'COMPLETED',
     CANCELLED = 'CANCELLED',
 }
 
 export enum PaymentMethod {
-    CASH = 'CASH',
-    CARD = 'CARD',
+    CASH_ON_DELIVERY = 'CASH_ON_DELIVERY',
 }
 
 export enum ContentType {

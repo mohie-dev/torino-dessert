@@ -22,7 +22,7 @@ export class Order extends BaseEntity {
     @Column({ name: 'customer_email', type: 'varchar', length: 255, nullable: true })
     customerEmail: string;
 
-    @Column({ name: 'delivery_address', type: 'text', nullable: true })
+    @Column({ name: 'delivery_address', type: 'text' })
     deliveryAddress: string;
     // -----------------
 
