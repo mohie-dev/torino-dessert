@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, type Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity.js';
 import { Category } from '../../categories/entities/category.entity.js';
 
@@ -27,5 +27,5 @@ export class Product extends BaseEntity {
 
     @ManyToOne(() => Category, (category) => category.products)
     @JoinColumn({ name: 'category_id' })
-    category: Category;
+    category: Relation<Category>;
 }

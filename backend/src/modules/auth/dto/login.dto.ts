@@ -5,7 +5,7 @@ import { IsEmail, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 export class LoginDto {
     @ApiProperty({
         description: 'Email address of the dashboard user (case-insensitive).',
-        example: 'admin@torino.com',
+        example: 'admin@example.com',
         format: 'email',
         maxLength: 255,
     })
@@ -18,7 +18,7 @@ export class LoginDto {
 
     @ApiProperty({
         description: 'Account password.',
-        example: 'StrongPassword123',
+        example: 'admin1234',
         format: 'password',
         maxLength: 72,
     })

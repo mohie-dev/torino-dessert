@@ -9,6 +9,9 @@ import { AuthModule } from './modules/auth/auht.module.js';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
 import { PermissionsGuard } from './common/guards/permissions.guard.js';
+import { CategoriesModule } from './modules/categories/categories.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
+import { CloudinaryModule } from './modules/cloudinary/cloudinary.module.js';
 
 @Module({
   imports: [
@@ -26,7 +29,10 @@ import { PermissionsGuard } from './common/guards/permissions.guard.js';
       }),
     }),
     HealthModule,
-    AuthModule
+    AuthModule,
+    CategoriesModule,
+    ProductsModule,
+    CloudinaryModule
   ],
   controllers: [],
   providers: [

@@ -11,6 +11,7 @@ import type { AuthenticatedUser } from '../../common/interfaces/authenticated-us
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
+    // POST ~/api/v1/auth/login
     @Public()
     @Post('login')
     @HttpCode(HttpStatus.OK)
@@ -21,6 +22,7 @@ export class AuthController {
         return this.authService.login(loginDto);
     }
 
+    // GET ~/api/v1/auth/me
     @Get('me')
     @ApiBearerAuth()
     @ApiOperation({ summary: 'Get current user profile and permissions' })

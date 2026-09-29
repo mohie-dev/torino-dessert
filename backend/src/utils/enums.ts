@@ -8,10 +8,8 @@ export enum Permission {
     PRODUCTS_CREATE = 'products:create',
     PRODUCTS_UPDATE = 'products:update',
     PRODUCTS_DELETE = 'products:delete',
-
     ORDERS_READ = 'orders:read',
     ORDERS_UPDATE = 'orders:update',
-
     USERS_READ = 'users:read',
     USERS_UPDATE = 'users:update',
 }

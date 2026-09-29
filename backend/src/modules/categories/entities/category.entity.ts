@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity.js';
 import { Product } from '../../products/entities/product.entity.js';
 
@@ -14,5 +14,5 @@ export class Category extends BaseEntity {
     isActive: boolean;
 
     @OneToMany(() => Product, (product) => product.category)
-    products: Product[];
+    products: Relation<Product>[];
 }

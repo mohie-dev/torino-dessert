@@ -6,7 +6,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
         Permission.PRODUCTS_READ,
         Permission.PRODUCTS_CREATE,
         Permission.PRODUCTS_UPDATE,
-
         Permission.ORDERS_READ,
         Permission.ORDERS_UPDATE,
     ],
