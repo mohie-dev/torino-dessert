@@ -5,6 +5,7 @@ import databaseConfig from './config/database.config.js';
 import { validate } from './config/env.validation.js';
 import { HealthModule } from './modules/health/health.module.js';
 import storageConfig from './config/storage.config.js';
+import { AuthModule } from './modules/auth/auht.module.js';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import storageConfig from './config/storage.config.js';
         ...configService.get('database'),
       }),
     }),
-    HealthModule
+    HealthModule,
+    AuthModule
   ],
   controllers: [],
   providers: [],
