@@ -6,6 +6,9 @@ import { validate } from './config/env.validation.js';
 import { HealthModule } from './modules/health/health.module.js';
 import storageConfig from './config/storage.config.js';
 import { AuthModule } from './modules/auth/auht.module.js';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard.js';
+import { PermissionsGuard } from './common/guards/permissions.guard.js';
 
 @Module({
   imports: [
@@ -14,8 +17,7 @@ import { AuthModule } from './modules/auth/auht.module.js';
       load: [databaseConfig, storageConfig],
       validate,
     }),
-    
-    // Setup TypeORM with Async Configuration
+
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -27,6 +29,15 @@ import { AuthModule } from './modules/auth/auht.module.js';
     AuthModule
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
+    },
+  ],
 })
-export class AppModule {}
+export class AppModule { }
