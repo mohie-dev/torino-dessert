@@ -165,4 +165,15 @@ export class OrdersService {
             totalRevenue: Number(revenueResult.totalRevenue) || 0,
         };
     }
+
+    async cancelOrder(id: string): Promise<Order> {
+        const order = await this.findOne(id);
+        if (order.status !== OrderStatus.PENDING) {
+            throw new BadRequestException(
+                `Cannot cancel order. Current status is ${order.status}. Only PENDING orders can be cancelled.`
+            );
+        }
+        order.status = OrderStatus.CANCELLED;
+        return await this.ordersRepository.save(order);
+    }
 }

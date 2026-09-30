@@ -54,4 +54,12 @@ export class OrdersController {
     ) {
         return this.ordersService.updateStatus(id, updateOrderStatusDto.status);
     }
+
+    @ApiBearerAuth()
+    @Patch(':id/cancel')
+    @RequirePermissions(Permission.ORDERS_UPDATE)
+    @ApiOperation({ summary: 'Cancel an order (Allowed only if status is PENDING)' })
+    cancelOrder(@Param('id', ParseUUIDPipe) id: string) {
+        return this.ordersService.cancelOrder(id);
+    }
 }
