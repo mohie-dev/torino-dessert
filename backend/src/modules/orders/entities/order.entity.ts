@@ -1,4 +1,4 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, OneToMany, type Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity.js';
 import { OrderStatus, PaymentMethod } from '../../../utils/enums.js';
 import { Customer } from '../../customers/entities/customer.entity.js';
@@ -46,8 +46,8 @@ export class Order extends BaseEntity {
 
     @ManyToOne(() => Customer, (customer) => customer.orders)
     @JoinColumn({ name: 'customer_id' })
-    customer: Customer;
+    customer: Relation<Customer>;
 
     @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
-    items: OrderItem[];
+    items: Relation<OrderItem>[];
 }

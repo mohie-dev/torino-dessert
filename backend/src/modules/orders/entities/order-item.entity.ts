@@ -1,4 +1,12 @@
-import { Entity, Column, ManyToOne, JoinColumn, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import {
+    Entity,
+    Column,
+    ManyToOne,
+    JoinColumn,
+    PrimaryGeneratedColumn,
+    CreateDateColumn,
+    type Relation
+} from 'typeorm';
 import { Order } from './order.entity.js';
 import { Product } from '../../products/entities/product.entity.js';
 
@@ -32,7 +40,7 @@ export class OrderItem {
 
     @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'order_id' })
-    order: Order;
+    order: Relation<Order>;
 
     @ManyToOne(() => Product, { onDelete: 'SET NULL' })
     @JoinColumn({ name: 'product_id' })

@@ -1,4 +1,4 @@
-import { Entity, Column, OneToMany } from 'typeorm';
+import { Entity, Column, OneToMany, Relation } from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity.js';
 import { Order } from '../../orders/entities/order.entity.js';
 
@@ -14,5 +14,5 @@ export class Customer extends BaseEntity {
     email: string;
 
     @OneToMany(() => Order, (order) => order.customer)
-    orders: Order[];
+    orders: Relation<Order>[];
 }

@@ -12,6 +12,8 @@ import { PermissionsGuard } from './common/guards/permissions.guard.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module.js';
+import { CustomersModule } from './modules/customers/customers.module.js';
+import { OrdersModule } from './modules/orders/orders.module.js';
 
 @Module({
   imports: [
@@ -32,7 +34,9 @@ import { CloudinaryModule } from './modules/cloudinary/cloudinary.module.js';
     AuthModule,
     CategoriesModule,
     ProductsModule,
-    CloudinaryModule
+    CloudinaryModule,
+    CustomersModule,
+    OrdersModule
   ],
   controllers: [],
   providers: [

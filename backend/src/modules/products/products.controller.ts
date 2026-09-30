@@ -6,6 +6,7 @@ import { UpdateProductDto } from './dto/update-product.dto.js';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator.js';
 import { Permission } from '../../utils/enums.js';
 import { ProductFilterDto } from './dto/product-filter.dto.js';
+import { Public } from '../../common/decorators/public.decorator.js';
 
 @ApiTags('Products')
 @ApiBearerAuth()
@@ -24,6 +25,15 @@ export class ProductsController {
     @RequirePermissions(Permission.PRODUCTS_READ)
     @ApiOperation({ summary: 'Get products with pagination and filters' })
     findAll(@Query() filterDto: ProductFilterDto) {
+        return this.productsService.findAll(filterDto);
+    }
+
+    @Public()
+    @Get('storefront')
+    @ApiOperation({ summary: 'Storefront: Get available products for customers' })
+    findAllForStorefront(@Query() filterDto: ProductFilterDto) {
+        filterDto.isAvailable = true;
+        filterDto.isArchived = false;
         return this.productsService.findAll(filterDto);
     }
 
