@@ -37,7 +37,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             throw new UnauthorizedException('User is deactivated or not found');
         }
 
-        const permissions = ROLE_PERMISSIONS[user.role] || [];
+        const permissions = user.role?.permissions || [];
 
         return {
             id: user.id,

@@ -37,6 +37,11 @@ export enum Permission {
     USERS_UPDATE = 'users:update',
     USERS_DELETE = 'users:delete',
     ROLES_MANAGE = 'roles:manage',
+    USERS_MANAGE = 'users:manage',
+
+    // 7. Settings
+    SETTINGS_MANAGE = 'settings:manage',
+    REPORTS_READ = 'reports:read',
 }
 
 export enum OrderStatus {

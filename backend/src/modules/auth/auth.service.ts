@@ -6,7 +6,6 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity.js';
 import { LoginDto } from './dto/login.dto.js';
 import { JwtPayload } from '../../common/interfaces/jwt-payload.interface.js';
-import { ROLE_PERMISSIONS } from '../users/constants/role-permissions.constant.js';
 
 // A valid bcrypt hash of a random password, generated once.
 // Used to spend the same time comparing when the email doesn't exist to prevent timing attacks.
@@ -51,7 +50,7 @@ export class AuthService {
             throw new UnauthorizedException('User not found or inactive');
         }
 
-        const permissions = ROLE_PERMISSIONS[user.role] || [];
+        const permissions = user.role?.permissions || [];
 
         return {
             user,

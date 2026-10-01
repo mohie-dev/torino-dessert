@@ -14,6 +14,8 @@ import { ProductsModule } from './modules/products/products.module.js';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module.js';
 import { CustomersModule } from './modules/customers/customers.module.js';
 import { OrdersModule } from './modules/orders/orders.module.js';
+import { RolesModule } from './modules/roles/roles.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 
 @Module({
   imports: [
@@ -32,11 +34,13 @@ import { OrdersModule } from './modules/orders/orders.module.js';
     }),
     HealthModule,
     AuthModule,
+    UsersModule,
     CategoriesModule,
     ProductsModule,
     CloudinaryModule,
     CustomersModule,
-    OrdersModule
+    OrdersModule,
+    RolesModule
   ],
   controllers: [],
   providers: [

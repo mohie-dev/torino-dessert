@@ -1,10 +1,12 @@
 import {
     Entity,
     Column,
+    JoinColumn,
+    ManyToOne,
 } from 'typeorm';
 
 import { BaseEntity } from '../../../common/entities/base.entity.js';
-import { UserRole } from '../../../utils/enums.js';
+import { Role } from '../../roles/entities/role.entity.js';
 
 @Entity('users')
 export class User extends BaseEntity {
@@ -38,12 +40,15 @@ export class User extends BaseEntity {
     })
     passwordHash: string;
 
-    @Column({
-        type: 'enum',
-        enum: UserRole,
-        default: UserRole.STAFF,
+    @ManyToOne(() => Role, (role) => role.users, {
+        eager: true,
+        nullable: true
     })
-    role: UserRole;
+    @JoinColumn({ name: 'role_id' })
+    role: Role;
+
+    @Column({ type: 'uuid', name: 'role_id', nullable: true })
+    roleId: string;
 
     @Column({
         name: 'is_active',
