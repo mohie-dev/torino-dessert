@@ -16,6 +16,7 @@ import { CustomersModule } from './modules/customers/customers.module.js';
 import { OrdersModule } from './modules/orders/orders.module.js';
 import { RolesModule } from './modules/roles/roles.module.js';
 import { UsersModule } from './modules/users/users.module.js';
+import { ReportsModule } from './modules/reports/reports.module.js';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { UsersModule } from './modules/users/users.module.js';
     CloudinaryModule,
     CustomersModule,
     OrdersModule,
-    RolesModule
+    RolesModule,
+    ReportsModule
   ],
   controllers: [],
   providers: [
