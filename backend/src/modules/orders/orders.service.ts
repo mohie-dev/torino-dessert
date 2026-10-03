@@ -8,6 +8,7 @@ import { CustomersService } from '../customers/customers.service.js';
 import { ProductsService } from '../products/products.service.js';
 import { OrderStatus } from '../../utils/enums.js';
 import { OrderFilterDto } from './dto/order-filter.dto.js';
+import { SettingsService } from '../settings/settings.service.js';
 
 @Injectable()
 export class OrdersService {
@@ -16,9 +17,16 @@ export class OrdersService {
         private readonly ordersRepository: Repository<Order>,
         private readonly customersService: CustomersService,
         private readonly productsService: ProductsService,
+        private readonly settingsService: SettingsService,
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
+        const settings = await this.settingsService.getSettings();
+
+        if (!settings.isOpen) {
+            throw new BadRequestException('عفواً، المطعم مغلق حالياً ولا يمكننا استقبال طلبات جديدة.');
+        }
+
         const { customer: customerDto, items, deliveryAddress, notes, paymentMethod } = createOrderDto;
 
         const customer = await this.customersService.findOrCreate(customerDto);
@@ -46,7 +54,7 @@ export class OrdersService {
             orderItems.push(orderItem);
         }
 
-        const deliveryFee = 20;
+        const deliveryFee = Number(settings.deliveryFee);
         const grandTotal = orderSubtotal + deliveryFee;
 
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 1000)}`;

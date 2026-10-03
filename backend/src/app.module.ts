@@ -17,6 +17,7 @@ import { OrdersModule } from './modules/orders/orders.module.js';
 import { RolesModule } from './modules/roles/roles.module.js';
 import { UsersModule } from './modules/users/users.module.js';
 import { ReportsModule } from './modules/reports/reports.module.js';
+import { SettingsModule } from './modules/settings/settings.module.js';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { ReportsModule } from './modules/reports/reports.module.js';
     CustomersModule,
     OrdersModule,
     RolesModule,
-    ReportsModule
+    ReportsModule,
+    SettingsModule
   ],
   controllers: [],
   providers: [
