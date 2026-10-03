@@ -9,7 +9,7 @@ import { RequirePermissions } from '../../common/decorators/require-permissions.
 
 @ApiTags('Users / Staff')
 @ApiBearerAuth()
-@Controller('api/v1/users')
+@Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 

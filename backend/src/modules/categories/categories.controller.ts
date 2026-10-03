@@ -5,14 +5,15 @@ import { CreateCategoryDto } from './dto/create-category.dto.js';
 import { UpdateCategoryDto } from './dto/update-category.dto.js';
 import { RequirePermissions } from '../../common/decorators/require-permissions.decorator.js';
 import { Permission } from '../../utils/enums.js';
+import { Public } from '../../common/decorators/public.decorator.js';
 
 @ApiTags('Categories')
-@ApiBearerAuth()
 @Controller('categories')
 export class CategoriesController {
     constructor(private readonly categoriesService: CategoriesService) { }
 
     @Post()
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_CREATE)
     @ApiOperation({ summary: 'Create a new category' })
     create(@Body() createCategoryDto: CreateCategoryDto) {
@@ -20,13 +21,14 @@ export class CategoriesController {
     }
 
     @Get()
-    @RequirePermissions(Permission.PRODUCTS_READ)
+    @Public()
     @ApiOperation({ summary: 'Get all categories' })
     findAll() {
         return this.categoriesService.findAll(true);
     }
 
     @Get(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_READ)
     @ApiOperation({ summary: 'Get a category by ID' })
     findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -34,6 +36,7 @@ export class CategoriesController {
     }
 
     @Patch(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_UPDATE)
     @ApiOperation({ summary: 'Update a category' })
     update(
@@ -44,6 +47,7 @@ export class CategoriesController {
     }
 
     @Delete(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_DELETE)
     @ApiOperation({ summary: 'Soft delete (deactivate) a category' })
     remove(@Param('id', ParseUUIDPipe) id: string) {

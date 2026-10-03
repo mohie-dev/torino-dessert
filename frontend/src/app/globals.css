@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme {
+  --color-chocolate: #7a4016;
+  --color-chocolate-dark: #542a0e;
+  --color-chocolate-light: #a76535;
+  --color-cream: #f6ebe1;
+  --color-cream-dark: #ead8c8;
+  --color-velvet: #a41c23;
+  --color-velvet-dark: #81171c;
+  --color-surface: #fffcf9;
+  --color-ink: #2d211a;
+  --color-muted: #806f62;
+  --font-sans: "DM Sans", "Segoe UI", sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --shadow-card: 0 8px 30px rgb(84 42 14 / 8%);
+  --shadow-elevated: 0 16px 48px rgb(84 42 14 / 14%);
+  --radius-4xl: 2rem;
+}
+
+:root {
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  background: #fffcf9;
+  color: #2d211a;
+}
+
+::selection {
+  background: #7a4016;
+  color: #fff;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+[role="link"],
+select,
+summary,
+label,
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgb(164 28 35 / 45%);
+  outline-offset: 3px;
+}

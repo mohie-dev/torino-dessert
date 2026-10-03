@@ -9,12 +9,12 @@ import { ProductFilterDto } from './dto/product-filter.dto.js';
 import { Public } from '../../common/decorators/public.decorator.js';
 
 @ApiTags('Products')
-@ApiBearerAuth()
 @Controller('products')
 export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
 
     @Post()
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_CREATE)
     @ApiOperation({ summary: 'Create a new product' })
     create(@Body() createProductDto: CreateProductDto) {
@@ -22,6 +22,7 @@ export class ProductsController {
     }
 
     @Get()
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_READ)
     @ApiOperation({ summary: 'Get products with pagination and filters' })
     findAll(@Query() filterDto: ProductFilterDto) {
@@ -38,6 +39,7 @@ export class ProductsController {
     }
 
     @Get(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_READ)
     @ApiOperation({ summary: 'Get a product by ID' })
     findOne(@Param('id', ParseUUIDPipe) id: string) {
@@ -45,6 +47,7 @@ export class ProductsController {
     }
 
     @Patch(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_UPDATE)
     @ApiOperation({ summary: 'Update a product' })
     update(
@@ -55,6 +58,7 @@ export class ProductsController {
     }
 
     @Delete(':id')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_DELETE)
     @ApiOperation({ summary: 'Archive a product' })
     remove(@Param('id', ParseUUIDPipe) id: string) {
@@ -62,6 +66,7 @@ export class ProductsController {
     }
 
     @Patch(':id/toggle-availability')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_UPDATE)
     @ApiOperation({ summary: 'Quick toggle product availability status' })
     toggleAvailability(@Param('id', ParseUUIDPipe) id: string) {
@@ -69,6 +74,7 @@ export class ProductsController {
     }
 
     @Patch(':id/restore')
+    @ApiBearerAuth()
     @RequirePermissions(Permission.PRODUCTS_UPDATE)
     @ApiOperation({ summary: 'Restore an archived product' })
     restore(@Param('id', ParseUUIDPipe) id: string) {

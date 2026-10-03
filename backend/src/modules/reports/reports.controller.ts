@@ -7,7 +7,7 @@ import { Permission } from '../../utils/enums.js';
 
 @ApiTags('Reports & Analytics')
 @ApiBearerAuth()
-@Controller('api/v1/reports')
+@Controller('reports')
 export class ReportsController {
     constructor(private readonly reportsService: ReportsService) { }
 
