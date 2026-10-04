@@ -4,8 +4,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   BarChart3,
+  ArrowRight,
+  Bell,
   CakeSlice,
   ClipboardList,
+  Clock3,
   ContactRound,
   LayoutDashboard,
   LogOut,
@@ -18,9 +21,13 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import { useUIStore } from "@/stores/ui-store";
+import { fetchOrders, type Order } from "@/lib/admin-api";
+import { formatCurrency } from "@/lib/format";
 import { BrandLockup } from "@/components/brand-lockup";
+import { useOrdersSocket } from "@/hooks/use-orders-socket";
 
 const navigation = [
   { label: "Overview", href: "/admin", permission: ["dashboard:read"], icon: LayoutDashboard },
@@ -49,6 +56,25 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const notify = useUIStore((state) => state.notify);
+  const canReadOrders =
+    status === "authenticated" && hasPermission("orders:read");
+  const pendingOrdersQuery = useQuery({
+    queryKey: ["admin", "pending-order-count"],
+    queryFn: async () => {
+      const response = await fetchOrders({
+        page: 1,
+        limit: 4,
+        status: "PENDING",
+      });
+      return { count: response.meta.total, orders: response.data };
+    },
+    enabled: canReadOrders,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+  });
+  const pendingOrderCount = pendingOrdersQuery.data?.count ?? 0;
+
+  useOrdersSocket(user?.id, canReadOrders);
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/admin/login");
@@ -115,9 +141,16 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <nav aria-label="Admin navigation" className="mt-3 space-y-1">
             {visibleNavigation.map(({ href, label, icon: Icon }) => {
               const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
+              const unreadOrderCount =
+                href === "/admin/orders" ? pendingOrderCount : 0;
               return (
                 <Link
                   aria-current={active ? "page" : undefined}
+                  aria-label={
+                    unreadOrderCount
+                      ? `${label}, ${unreadOrderCount} new orders not yet viewed`
+                      : label
+                  }
                   className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
                     active ? "bg-white text-chocolate-dark shadow-sm" : "text-white/75 hover:bg-white/10 hover:text-white"
                   }`}
@@ -126,7 +159,15 @@ export function AdminShell({ children }: { children: ReactNode }) {
                   onClick={() => setMobileOpen(false)}
                 >
                   <Icon size={18} strokeWidth={1.8} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {unreadOrderCount > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="grid min-w-5 place-items-center rounded-full bg-velvet px-1.5 py-0.5 text-[10px] font-bold leading-4 text-white"
+                    >
+                      {unreadOrderCount > 99 ? "99+" : unreadOrderCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -164,6 +205,99 @@ export function AdminShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {canReadOrders && (
+              <div className="group relative">
+                <Link
+                  aria-label={
+                    pendingOrderCount
+                      ? `${pendingOrderCount} orders awaiting confirmation`
+                      : "No orders awaiting confirmation"
+                  }
+                  className="relative grid size-10 place-items-center rounded-xl text-chocolate outline-none hover:bg-cream focus-visible:ring-2 focus-visible:ring-velvet"
+                  href="/admin/orders"
+                >
+                  <Bell size={19} />
+                  {pendingOrderCount > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-velvet px-1.5 py-0.5 text-[10px] font-bold leading-4 text-white"
+                    >
+                      {pendingOrderCount > 99 ? "99+" : pendingOrderCount}
+                    </span>
+                  )}
+                </Link>
+
+                <div
+                  className="invisible absolute right-0 top-full z-50 w-[min(22rem,calc(100vw-2rem))] translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
+                  role="status"
+                >
+                  <div className="overflow-hidden rounded-2xl border border-[#eee7df] bg-white text-ink shadow-[0_20px_60px_-18px_rgba(45,31,23,0.35)]">
+                    <div className="flex items-center justify-between bg-cream/70 px-5 py-4">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-chocolate-light">
+                          Order queue
+                        </p>
+                        <h2 className="mt-1 font-display text-lg font-semibold">
+                          Awaiting confirmation
+                        </h2>
+                      </div>
+                      <span className="grid size-10 place-items-center rounded-full bg-white font-semibold text-velvet shadow-sm">
+                        {pendingOrderCount > 99 ? "99+" : pendingOrderCount}
+                      </span>
+                    </div>
+
+                    {pendingOrdersQuery.isLoading ? (
+                      <p className="px-5 py-6 text-sm text-muted">
+                        Checking for pending orders…
+                      </p>
+                    ) : pendingOrdersQuery.isError ? (
+                      <p className="px-5 py-6 text-sm text-velvet">
+                        Pending orders could not be loaded.
+                      </p>
+                    ) : pendingOrdersQuery.data?.orders.length ? (
+                      <ul className="divide-y divide-[#f0ebe6]">
+                        {pendingOrdersQuery.data.orders
+                          .slice(0, 3)
+                          .map((order: Order) => (
+                            <li
+                              className="flex items-center justify-between gap-3 px-5 py-3.5"
+                              key={order.id}
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold">
+                                  {order.orderNumber}
+                                </p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-muted">
+                                  <Clock3 size={12} />
+                                  {new Intl.DateTimeFormat("en-EG-u-nu-latn", {
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                  }).format(new Date(order.createdAt))}
+                                </p>
+                              </div>
+                              <span className="shrink-0 text-sm font-semibold text-chocolate">
+                                {formatCurrency(order.total)}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    ) : (
+                      <p className="px-5 py-6 text-sm text-muted">
+                        You’re all caught up. No orders are waiting.
+                      </p>
+                    )}
+
+                    <Link
+                      className="flex items-center justify-between border-t border-[#eee7df] px-5 py-3.5 text-sm font-semibold text-velvet transition hover:bg-cream/50"
+                      href="/admin/orders"
+                    >
+                      Open order management
+                      <ArrowRight size={16} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-ink">{displayName}</p>
               <p className="text-xs text-muted">Team account</p>

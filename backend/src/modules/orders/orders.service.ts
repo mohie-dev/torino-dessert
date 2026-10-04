@@ -9,6 +9,7 @@ import { ProductsService } from '../products/products.service.js';
 import { OrderStatus } from '../../utils/enums.js';
 import { OrderFilterDto } from './dto/order-filter.dto.js';
 import { SettingsService } from '../settings/settings.service.js';
+import { OrdersGateway } from './orders.gateway.js';
 
 @Injectable()
 export class OrdersService {
@@ -18,6 +19,7 @@ export class OrdersService {
         private readonly customersService: CustomersService,
         private readonly productsService: ProductsService,
         private readonly settingsService: SettingsService,
+        private readonly ordersGateway: OrdersGateway,
     ) { }
 
     async create(createOrderDto: CreateOrderDto): Promise<Order> {
@@ -74,7 +76,14 @@ export class OrdersService {
             items: orderItems,
         });
 
-        return await this.ordersRepository.save(order);
+        const savedOrder = await this.ordersRepository.save(order);
+
+        this.ordersGateway.notifyNewOrder({
+            orderNumber: savedOrder.orderNumber,
+            total: savedOrder.total,
+        });
+
+        return savedOrder;
     }
 
     async findAll(filterDto: OrderFilterDto) {
@@ -133,7 +142,12 @@ export class OrdersService {
     async updateStatus(id: string, status: OrderStatus): Promise<Order> {
         const order = await this.findOne(id);
         order.status = status;
-        return await this.ordersRepository.save(order);
+        const updatedOrder = await this.ordersRepository.save(order);
+        this.ordersGateway.notifyOrderStatusUpdated({
+            orderNumber: updatedOrder.orderNumber,
+            status: updatedOrder.status,
+        });
+        return updatedOrder;
     }
 
     async getDashboardStats() {
@@ -182,6 +196,11 @@ export class OrdersService {
             );
         }
         order.status = OrderStatus.CANCELLED;
-        return await this.ordersRepository.save(order);
+        const cancelledOrder = await this.ordersRepository.save(order);
+        this.ordersGateway.notifyOrderStatusUpdated({
+            orderNumber: cancelledOrder.orderNumber,
+            status: cancelledOrder.status,
+        });
+        return cancelledOrder;
     }
 }
