@@ -36,7 +36,10 @@ export function Navbar() {
           <Link className="text-sm text-ink transition hover:text-chocolate" href="/#story">
             Our story
           </Link>
-          <Link className="text-sm text-ink transition hover:text-chocolate" href="/#contact">
+          <Link
+            className="text-sm text-ink transition hover:text-chocolate"
+            href="/#contact"
+          >
             Contact
           </Link>
         </nav>

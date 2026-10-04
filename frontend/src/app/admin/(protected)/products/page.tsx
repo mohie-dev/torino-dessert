@@ -61,6 +61,8 @@ export default function AdminProductsPage() {
   const canCreate = hasPermission("products:create");
   const canUpdate = hasPermission("products:update");
   const canDelete = hasPermission("products:delete");
+  const editingCategoryId =
+    editingProduct?.categoryId || editingProduct?.category?.id;
 
   const productsQuery = useQuery({
     queryKey: ["admin", "products", { archived, search, categoryFilter, page }],
@@ -93,6 +95,7 @@ export default function AdminProductsPage() {
         : createProduct(values),
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      await queryClient.invalidateQueries({ queryKey: ["storefront", "products"] });
       notify("success", variables.id ? "Product updated." : "Product created.");
       closeProductDialog();
     },
@@ -136,28 +139,6 @@ export default function AdminProductsPage() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    product.reset(
-      editingProduct
-        ? {
-            name: editingProduct.name,
-            description: editingProduct.description ?? "",
-            price: Number(editingProduct.price),
-            imageUrl: editingProduct.imageUrl ?? "",
-            isAvailable: editingProduct.isAvailable,
-            categoryId: editingProduct.categoryId,
-          }
-        : {
-            name: "",
-            description: "",
-            price: 0,
-            imageUrl: "",
-            isAvailable: true,
-            categoryId: "",
-          },
-    );
-  }, [editingProduct, product]);
-
-  useEffect(() => {
     category.reset(
       editingCategory
         ? {
@@ -171,6 +152,56 @@ export default function AdminProductsPage() {
 
   async function refreshCatalog() {
     await queryClient.invalidateQueries({ queryKey: ["storefront", "products"] });
+  }
+
+  function openProductDialog(productToEdit: Product | null) {
+    product.reset(
+      productToEdit
+        ? {
+            name: productToEdit.name,
+            description: productToEdit.description ?? "",
+            price: Number(productToEdit.price),
+            imageUrl: productToEdit.imageUrl ?? "",
+            isAvailable: productToEdit.isAvailable,
+            categoryId:
+              productToEdit.categoryId || productToEdit.category?.id || "",
+          }
+        : {
+            name: "",
+            description: "",
+            price: 0,
+            imageUrl: "",
+            isAvailable: true,
+            categoryId: "",
+          },
+    );
+    setEditingProduct(productToEdit);
+    setProductDialogOpen(true);
+  }
+
+  function submitProduct(values: ProductValues) {
+    const categoryId = values.categoryId.trim();
+    if (!categoryId) {
+      product.setError("categoryId", {
+        type: "validate",
+        message: "Choose a category.",
+      });
+      return;
+    }
+
+    const payload: ProductValues = {
+      name: values.name,
+      description: values.description,
+      price: values.price,
+      imageUrl: values.imageUrl,
+      isAvailable: values.isAvailable,
+      categoryId,
+    };
+    productMutation.mutate({ id: editingProduct?.id, values: payload });
+  }
+
+  function handleInvalidProductSubmit() {
+    notify("error", "Please correct the highlighted fields before saving.");
   }
 
   function closeProductDialog() {
@@ -219,10 +250,7 @@ export default function AdminProductsPage() {
               </button>
               <button
                 className="inline-flex items-center gap-2 rounded-full bg-velvet px-4 py-2.5 text-sm font-semibold text-white hover:bg-velvet-dark"
-                onClick={() => {
-                  setEditingProduct(null);
-                  setProductDialogOpen(true);
-                }}
+                onClick={() => openProductDialog(null)}
                 type="button"
               >
                 <Plus size={16} /> Add product
@@ -326,7 +354,7 @@ export default function AdminProductsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4 text-muted">{item.category?.name ?? categoriesQuery.data?.find((c) => c.id === item.categoryId)?.name ?? "—"}</td>
+                    <td className="px-5 py-4 text-muted">{categoriesQuery.data?.find((category) => category.id === item.categoryId)?.name ?? item.category?.name ?? "—"}</td>
                     <td className="px-5 py-4 font-semibold text-chocolate">{formatCurrency(item.price)}</td>
                     <td className="px-5 py-4">
                       {!archived && canUpdate ? (
@@ -376,10 +404,7 @@ export default function AdminProductsPage() {
                               <button
                                 aria-label={`Edit ${item.name}`}
                                 className="grid size-9 place-items-center rounded-xl text-chocolate hover:bg-cream"
-                                onClick={() => {
-                                  setEditingProduct(item);
-                                  setProductDialogOpen(true);
-                                }}
+                                onClick={() => openProductDialog(item)}
                                 type="button"
                               >
                                 <Pencil size={16} />
@@ -532,7 +557,10 @@ export default function AdminProductsPage() {
 
             <form
               className="mt-6 space-y-4"
-              onSubmit={product.handleSubmit((values) => productMutation.mutate({ id: editingProduct?.id, values }))}
+              onSubmit={product.handleSubmit(
+                submitProduct,
+                handleInvalidProductSubmit,
+              )}
               noValidate
             >
               <div className="grid gap-4 sm:grid-cols-2">
@@ -548,13 +576,43 @@ export default function AdminProductsPage() {
                 </label>
                 <label className="text-sm font-medium text-ink">
                   Category
-                  <select className={inputClass} {...product.register("categoryId")}>
+                  <select
+                    className={inputClass}
+                    disabled={categoriesQuery.isLoading || categoriesQuery.isError}
+                    {...product.register("categoryId")}
+                  >
                     <option value="">Choose category</option>
-                    {categoriesQuery.data?.filter((item) => item.isActive).map((item) => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
+                    {editingCategoryId &&
+                      !categoriesQuery.data?.some(
+                        (item) =>
+                          item.id === editingCategoryId && item.isActive,
+                      ) && (
+                        <option value={editingCategoryId}>
+                          {categoriesQuery.data?.find(
+                            (item) => item.id === editingCategoryId,
+                          )?.name ??
+                            editingProduct?.category?.name ??
+                            "Current category"} (inactive)
+                        </option>
+                      )}
+                    {categoriesQuery.data
+                      ?.filter((item) => item.isActive)
+                      .map((item) => (
+                        <option key={item.id} value={item.id}>
+                          {item.name}
+                        </option>
+                      ))}
                   </select>
                   {product.formState.errors.categoryId && <span className="mt-1 block text-xs text-velvet">{product.formState.errors.categoryId.message}</span>}
+                  {categoriesQuery.isError && (
+                    <button
+                      className="mt-1 block text-xs font-semibold text-velvet underline"
+                      onClick={() => void categoriesQuery.refetch()}
+                      type="button"
+                    >
+                      Could not load categories. Retry
+                    </button>
+                  )}
                 </label>
                 <label className="text-sm font-medium text-ink sm:col-span-2">
                   Description <span className="font-normal text-muted">(optional)</span>
@@ -606,7 +664,7 @@ export default function AdminProductsPage() {
               </div>
               <div className="flex justify-end gap-3 border-t border-[#eee7df] pt-5">
                 <button className="rounded-full px-5 py-2.5 text-sm font-semibold text-chocolate hover:bg-cream" onClick={closeProductDialog} type="button">Cancel</button>
-                <button className="rounded-full bg-velvet px-6 py-2.5 text-sm font-semibold text-white hover:bg-velvet-dark disabled:opacity-50" disabled={productMutation.isPending || uploading} type="submit">
+                <button className="rounded-full bg-velvet px-6 py-2.5 text-sm font-semibold text-white hover:bg-velvet-dark disabled:cursor-not-allowed disabled:opacity-50" disabled={productMutation.isPending || uploading} type="submit">
                   {productMutation.isPending ? "Saving…" : editingProduct ? "Save changes" : "Create product"}
                 </button>
               </div>

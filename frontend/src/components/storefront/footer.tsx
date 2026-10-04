@@ -31,7 +31,11 @@ export function Footer() {
             </p>
           </div>
 
-          <section aria-labelledby="footer-contact-title">
+          <section
+            aria-labelledby="footer-contact-title"
+            className="scroll-mt-24"
+            id="contact"
+          >
             <h2
               className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55"
               id="footer-contact-title"

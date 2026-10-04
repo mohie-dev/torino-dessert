@@ -78,10 +78,13 @@ export class ProductsService {
         const product = await this.findOne(id);
 
         if (updateProductDto.categoryId) {
-            await this.categoriesService.findOne(updateProductDto.categoryId);
+            const category = await this.categoriesService.findOne(updateProductDto.categoryId);
+            product.category = category;
+            product.categoryId = category.id;
+            delete updateProductDto.categoryId;
         }
-
         Object.assign(product, updateProductDto);
+
         return await this.productsRepository.save(product);
     }
 

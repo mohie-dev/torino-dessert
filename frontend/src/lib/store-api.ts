@@ -1,4 +1,5 @@
 import { api } from "@/lib/api";
+import type { ProductValues } from "@/schemas/api-schemas";
 
 export interface Product {
   id: string;
@@ -11,6 +12,8 @@ export interface Product {
   categoryId: string;
   category?: Category;
 }
+
+export type ProductWritePayload = ProductValues;
 
 export interface Category {
   id: string;
@@ -97,7 +100,7 @@ export async function fetchAdminProducts(params?: {
 }
 
 export async function createProduct(
-  product: Record<string, unknown>,
+  product: ProductWritePayload,
 ): Promise<Product> {
   const response = await api.post<Product>("/products", product);
   return response.data;
@@ -105,10 +108,23 @@ export async function createProduct(
 
 export async function updateProduct(
   id: string,
-  product: Record<string, unknown>,
+  product: ProductWritePayload,
 ): Promise<Product> {
   const response = await api.patch<Product>(`/products/${id}`, product);
-  return response.data;
+  const savedProduct = response.data;
+  const savedCategoryId =
+    savedProduct.categoryId || savedProduct.category?.id;
+
+  if (savedCategoryId && savedCategoryId !== product.categoryId) {
+    throw new Error(
+      "The server returned a different product category. Please try again.",
+    );
+  }
+
+  return {
+    ...savedProduct,
+    categoryId: savedCategoryId ?? product.categoryId,
+  };
 }
 
 export async function archiveProduct(id: string): Promise<void> {
