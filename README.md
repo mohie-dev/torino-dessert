@@ -4,13 +4,43 @@
 
 Torino Dessert is a growing dessert brand based in Mansoura, Egypt.
 
-This project is being built to give Torino a professional digital presence
-while providing a simple ordering and management system that can support
-the business as it grows.
+This project gives Torino a professional digital presence while providing a
+simple ordering and management system that can support the business as it
+grows.
 
-The system combines a customer-facing brand website with an internal
-admin dashboard for managing products, orders, customers, and basic
-business insights.
+The system combines a customer-facing brand website with an internal admin
+dashboard for managing products, orders, customers, and basic business
+insights.
+
+---
+
+## 🚦 Current Status
+
+> 🚧 **MVP — In Development**
+
+The **backend is functionally complete** for the MVP scope. The **frontend is
+built and connected**, and is in the final polish stage.
+
+| Area | Status | Notes |
+| --- | --- | --- |
+| Database schema & migrations | ✅ Done | 7 migrations applied, `synchronize: false` |
+| Authentication (JWT) | ✅ Done | Login + `/auth/me`, bcrypt hashing |
+| RBAC (roles & permissions) | ✅ Done | Dynamic roles, permissions injected into JWT |
+| Categories CRUD | ✅ Done | Soft delete via `isActive` |
+| Products CRUD | ✅ Done | Archive / restore / toggle availability, image upload |
+| Orders & lifecycle | ✅ Done | 6 statuses, cancel only while `PENDING` |
+| Customers | ✅ Done | Auto-created from orders, read-only admin view |
+| Dashboard statistics | ✅ Done | Totals, active orders, today's orders & revenue |
+| Reports | ✅ Done | Sales summary + top products over a date range |
+| Store settings | ✅ Done | Delivery fee, open/closed state, social links |
+| Cloudinary uploads | ✅ Done | Product images |
+| Real-time order alerts | ✅ Done | Socket.IO namespace `/admin-orders` + sound |
+| Storefront (home, catalog, checkout) | ✅ Done | Responsive, brand-styled |
+| Admin dashboard (7 pages) | ✅ Done | Overview, orders, products, customers, reports, settings, team |
+| Public order tracking | ⏳ Next | Customer-facing status lookup |
+| Product details page | ⏳ Next | Dedicated storefront page per product |
+| Automated tests | ⏳ Next | Only framework defaults exist so far |
+| `docs/` folder | ⏳ Next | Technical specs and API overview |
 
 ---
 
@@ -29,44 +59,47 @@ The main goals of the project are to:
 
 ---
 
-## ✨ Core Features
+## ✨ Features
 
 ### 🌐 Customer Website
 
-The customer-facing website will include:
+Live at `/`:
 
-- Home Page
-- Torino Brand Identity
-- About Torino
-- Product Catalog
-- Product Categories
-- Product Details
-- Shopping Cart
-- Checkout
-- Order Confirmation
-- Order Status
-- Contact Us
-- Social Media Links
-- Responsive Design
+- Home page with brand hero, catalog, and story section
+- Product catalog with category filter and search
+- Add-to-cart with persistent storage (Zustand + localStorage)
+- Quantity editing and cart review inside checkout
+- Checkout with validated customer, delivery, and notes data
+- Order confirmation with a generated order reference
+- Contact section with phone, WhatsApp, Facebook, and Instagram
+- Responsive design (mobile, tablet, desktop)
 
-The website will focus on both **brand presentation** and **customer
-experience**, rather than functioning as a simple online menu.
+The website focuses on **brand presentation** and **customer experience**,
+rather than functioning as a simple online menu.
+
+> **Still to add:** a standalone cart page, a product details page, and a
+> public order-tracking page.
 
 ---
 
 ### 🛒 Ordering System
 
-Customers will be able to:
+Customers can:
 
 1. Browse Torino products.
-2. Open product details.
+2. Filter by category or search by name.
 3. Add products to the cart.
 4. Adjust quantities.
 5. Review their order.
 6. Provide their contact and delivery information.
 7. Submit the order.
 8. Receive an order reference.
-9. Follow the order status.
+
+**Checkout is intentionally "thin".** The storefront sends product IDs and
+quantities only. The backend validates availability, resolves live prices,
+applies the delivery fee, and calculates the total. The store's open/closed
+state is enforced server-side, so a closed store rejects orders even if the UI
+is stale.
 
 #### Order Lifecycle
 
@@ -80,7 +113,7 @@ Preparing
 Out for Delivery
    ↓
 Completed
-````
+```
 
 An order can also be marked as:
 
@@ -88,328 +121,415 @@ An order can also be marked as:
 Cancelled
 ```
 
-The initial version will focus on a simple ordering experience without
-requiring customers to create an account.
+Cancellation is only allowed while an order is still `PENDING`.
+
+> The MVP does not require customers to create an account.
 
 ---
 
-## 🧑‍💼 Admin Dashboard
+### 🧑‍💼 Admin Dashboard
 
-The admin dashboard will provide the Torino team with a simple way to
-manage the daily operation of the business.
+Available at `/admin` after signing in at `/admin/login`.
 
-### Orders
+**Overview** — all-time orders, active orders, today's orders, today's revenue.
 
-* View incoming orders.
-* Search and filter orders.
-* View complete order details.
-* View customer information.
-* Update order status.
-* Track completed and cancelled orders.
+**Orders** — searchable and filterable list, full order details, status
+updates, and cancellation. New orders arrive in real time with a notification
+and a sound cue.
 
-### Products
+**Products** — full CRUD, image upload, price editing, availability toggle,
+archive/restore, and category assignment.
 
-* Add products.
-* Edit products.
-* Update prices.
-* Upload product images.
-* Assign categories.
-* Enable or disable product availability.
+**Categories** — create, edit, and deactivate from within the products page.
 
-### Categories
+**Customers** — list, search, and per-customer order history.
 
-* Create categories.
-* Edit categories.
-* Remove categories.
-* Organize products.
+**Reports** — date-range sales summary (revenue, order counts, completed,
+cancelled, average order value) and a top-selling products ranking.
 
-### Customers
+**Team** — staff accounts, role assignment, activation/deactivation, and role
+management with a permission matrix.
 
-The system will keep customer information associated with their orders
-and provide basic customer insights over time.
-
-### Dashboard
-
-The dashboard will provide a simple overview of the business, including:
-
-* Today's orders.
-* Today's sales.
-* Pending orders.
-* Completed orders.
-* Total orders.
-* Basic sales statistics.
+**Settings** — store name, phone, WhatsApp, social links, delivery fee, and
+open/closed toggle.
 
 ---
 
 ## 📊 Business Insights
 
-One of the important goals of the system is to start collecting useful
-business data from the first real orders.
+The system starts collecting useful business data from the first real order.
 
-Over time, Torino will be able to understand:
+Currently available:
 
-* Total number of orders.
-* Total sales.
-* Average order value.
-* Completed orders.
-* Cancelled orders.
-* Most requested products.
-* Sales over a specific period.
-* Order trends over time.
+- Total number of orders
+- Total revenue (excluding cancelled orders)
+- Active orders
+- Today's orders and today's revenue
+- Average order value over a period
+- Completed and cancelled orders per period
+- Most requested products per period
 
-These insights can help the team understand the growth of the business
-and make better decisions.
+> **Planned:** revenue trend charts over time, repeat-customer analysis, and
+> exportable reports.
 
-The collected data can also be useful when presenting Torino's activity
-and growth to potential suppliers or business partners.
+The collected data is also useful when presenting Torino's activity and growth
+to potential suppliers or business partners.
 
 ---
 
 ## 🏗️ Technical Direction
 
-The project will start as a **simple modular application** focused on
-maintainability and fast development.
-
-The goal is not to introduce unnecessary infrastructure or complexity
-during the MVP stage.
+The project is a **modular monolith** focused on maintainability and fast
+development, avoiding unnecessary infrastructure during the MVP stage.
 
 ### Backend
 
-* NestJS
-* TypeScript
-* PostgreSQL
-* TypeORM
-* JWT Authentication
-* REST API
-* Swagger / OpenAPI
-* class-validator
-* class-transformer
+- NestJS 12, TypeScript 6 (ESM)
+- PostgreSQL + TypeORM (migrations, `synchronize: false`)
+- JWT authentication with Passport
+- Swagger / OpenAPI at `/api/v1/docs`
+- class-validator + class-transformer
+- Socket.IO gateway for real-time order updates
+- Cloudinary for image uploads
+- Vitest for unit and e2e tests
+- oxlint + Prettier
 
 ### Frontend
 
-* Next.js
-* TypeScript
-* Tailwind CSS
-
-Additional frontend libraries may be introduced when they provide clear
-value to the project.
+- Next.js 16 (App Router), React 19, TypeScript
+- Tailwind CSS 4
+- TanStack Query for server state
+- Zustand for cart and UI state (with persistence)
+- React Hook Form + Zod for forms and validation
+- Axios for HTTP, socket.io-client for live updates
+- lucide-react for icons
 
 ### Storage
 
-Product images and other uploaded assets may use an
-S3-compatible object storage service.
+Product images are stored on Cloudinary.
 
 ---
 
-## 🧱 Architecture Approach
-
-The initial system will follow a **modular monolith** approach.
+## 🧱 Architecture
 
 ```text
-                    ┌──────────────────────┐
-                    │   Customer Website   │
-                    │       Next.js        │
-                    └──────────┬───────────┘
-                               │
-                               │ REST API
-                               ▼
-                    ┌──────────────────────┐
-                    │      NestJS API      │
-                    │                      │
-                    │  Auth                │
-                    │  Products            │
-                    │  Categories          │
-                    │  Customers           │
-                    │  Orders              │
-                    │  Dashboard           │
-                    │  Reports             │
-                    │  Settings            │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │     PostgreSQL       │
-                    └──────────────────────┘
+                        ┌──────────────────────────┐
+                        │    Customer Website      │
+                        │   Next.js  ·  port 3001  │
+                        └────────────┬─────────────┘
+                                     │  REST  /api/v1
+                                     │  Socket.IO /admin-orders
+                        ┌────────────▼─────────────┐
+                        │      NestJS API          │
+                        │  Auth (JWT + RBAC)       │
+                        │  Users · Roles           │
+                        │  Categories · Products   │
+                        │  Customers · Orders      │
+                        │  Reports · Settings      │
+                        │  Cloudinary · Health     │
+                        └──────┬─────────────┬─────┘
+                               │             │
+                ┌──────────────▼───┐   ┌─────▼─────────────┐
+                │   PostgreSQL     │   │     Cloudinary    │
+                │   (migrations)   │   │   product images  │
+                └──────────────────┘   └───────────────────┘
 ```
 
-The architecture will remain intentionally simple during the MVP.
+Global backend behavior:
 
-Infrastructure decisions will be based on actual project requirements
-rather than introducing technologies that are not currently needed.
+- All routes require a JWT unless marked `@Public()`
+- `@RequirePermissions()` enforces RBAC through a global guard
+- `ValidationPipe` runs globally with `whitelist` and `forbidNonWhitelisted`
+- A global exception filter standardizes error responses
+- A global interceptor standardizes success responses
 
 ---
 
-## 🗂️ Initial Backend Modules
-
-The backend is expected to contain modules such as:
+## 📂 Project Structure
 
 ```text
-src/
-├── auth/
-├── users/
-├── products/
-├── categories/
-├── customers/
-├── orders/
-├── dashboard/
-├── reports/
-├── settings/
-└── common/
+torino-dessert/
+├── backend/
+│   └── src/
+│       ├── common/            # guards, decorators, filters, interceptors
+│       ├── config/            # env validation, database, storage, data-source
+│       ├── migrations/        # TypeORM migrations
+│       ├── modules/
+│       │   ├── auth/          # login, /me, JWT strategy
+│       │   ├── users/         # staff accounts
+│       │   ├── roles/         # roles & permission matrix
+│       │   ├── categories/    # product categories
+│       │   ├── products/      # products CRUD + availability
+│       │   ├── customers/     # customers created from orders
+│       │   ├── orders/        # orders, lifecycle, stats, gateway
+│       │   ├── reports/       # sales + top products
+│       │   ├── settings/      # store settings (singleton)
+│       │   ├── cloudinary/    # image uploads
+│       │   └── health/        # health check
+│       ├── scripts/           # seed-admin, seed-products
+│       ├── utils/enums.ts     # OrderStatus, PaymentMethod, Permission
+│       ├── app.module.ts
+│       └── main.ts
+└── frontend/
+    └── src/
+        ├── app/
+        │   ├── (storefront)/  # home, catalog, checkout, checkout/success
+        │   └── admin/         # login + protected dashboard routes
+        ├── components/
+        │   ├── storefront/    # navbar, catalog, product card, checkout form…
+        │   └── admin/         # shell, feedback states, confirm dialog
+        ├── contexts/          # auth context
+        ├── hooks/             # use-orders-socket
+        ├── lib/               # axios clients, API wrappers, formatting
+        ├── schemas/           # Zod schemas
+        └── stores/            # cart store, UI store
 ```
-
-The exact structure may evolve during implementation as the domain
-model becomes clearer.
 
 ---
 
-## 🗄️ Initial Domain
+## 🔌 API Overview
 
-The initial database design is expected to include concepts such as:
+Base URL: `http://localhost:3000/api/v1` · Docs: `/api/v1/docs` (non-production)
+
+### Public
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/health` | Health check |
+| `POST` | `/auth/login` | Sign in and receive a JWT |
+| `GET` | `/auth/me` | Current user profile |
+| `GET` | `/categories` | Active categories |
+| `GET` | `/products/storefront` | Available, non-archived products |
+| `GET` | `/settings` | Public store settings (delivery fee, open state) |
+| `POST` | `/orders` | Place an order (checkout) |
+
+### Orders (admin)
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `GET` | `/orders` | `orders:read` |
+| `GET` | `/orders/stats` | `dashboard:read` |
+| `GET` | `/orders/:id` | `orders:read` |
+| `PATCH` | `/orders/:id/status` | `orders:update` |
+| `PATCH` | `/orders/:id/cancel` | `orders:update` |
+
+### Products & Categories (admin)
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `POST` `GET` | `/products` | `products:create` / `products:read` |
+| `GET` `PATCH` `DELETE` | `/products/:id` | `products:read` / `products:update` / `products:delete` |
+| `PATCH` | `/products/:id/toggle-availability` | `products:update` |
+| `PATCH` | `/products/:id/restore` | `products:update` |
+| `POST` `GET` | `/categories` | `products:create` / public |
+| `GET` `PATCH` `DELETE` | `/categories/:id` | `products:read` / `products:update` / `products:delete` |
+
+### Customers, Reports, Settings, Team
+
+| Method | Endpoint | Permission |
+| --- | --- | --- |
+| `GET` | `/customers`, `/customers/:id` | `customers:read` |
+| `GET` | `/reports/sales`, `/reports/top-products` | `reports:read` |
+| `PATCH` | `/settings` | `settings:manage` |
+| `POST` `GET` | `/users` | `users:create` / `users:read` |
+| `GET` `PATCH` | `/users/:id`, `/users/:id/status` | `users:read` / `users:update` |
+| `POST` `GET` | `/roles` | `roles:manage` |
+| `PATCH` `DELETE` | `/roles/:id` | `roles:manage` |
+| `POST` | `/upload/image` | `products:update` |
+
+---
+
+## 🗄️ Domain Model
 
 ```text
-AdminUser
-Category
-Product
-Customer
-Order
-OrderItem
-StoreSettings
+Role ──< User
+Category ──< Product
+Customer ──< Order ──< OrderItem
+StoreSetting (singleton row)
 ```
 
-The final database structure will be defined during the
-**ERD & Database Design** phase.
+Key design decisions:
+
+- **Orders snapshot customer and product data.** Name, phone, email, delivery
+  address, product name, and unit price are copied onto the order at creation
+  time, so later edits never rewrite history.
+- **Products and categories are soft-deleted.** `isArchived` and `isActive`
+  keep historical orders intact.
+- **Customers are derived from orders.** There is no separate sign-up; a
+  customer record is found or created from the checkout payload.
+- **Store settings are a single row.** The delivery fee and open/closed state
+  live in the database and are editable from the dashboard.
 
 ---
 
-## 🚧 MVP Scope
+## 🚀 Getting Started
 
-The first release focuses on the most important workflows.
+### Prerequisites
+
+- Node.js 20.9+
+- A PostgreSQL database
+
+### Backend
+
+```bash
+cd backend
+npm install
+```
+
+Create `backend/.env`:
+
+```env
+NODE_ENV=development
+PORT=3000
+API_PREFIX=api/v1
+DATABASE_URI=postgresql://user:password@localhost:5432/torino
+JWT_ACCESS_SECRET=<long-random-secret>
+
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+SEED_ADMIN_EMAIL=admin@torino.com
+SEED_ADMIN_PASSWORD=<strong-password>
+```
+
+`NODE_ENV`, `PORT`, `DATABASE_URI`, `API_PREFIX`, and `JWT_ACCESS_SECRET` are
+validated at boot — the app refuses to start without them.
+
+```bash
+npm run migration:run     # apply migrations
+npm run seed:admin        # create the Super Admin account
+npm run seed              # optional: demo categories and products
+npm run start:dev         # http://localhost:3000/api/v1
+```
+
+### Frontend
+
+```powershell
+cd frontend
+Copy-Item .env.example .env.local
+npm ci
+npm run dev               # http://localhost:3001
+```
+
+Set `NEXT_PUBLIC_API_URL` in `.env.local` to the API base URL including its
+versioned prefix, for example `http://localhost:3000/api/v1`. Never commit
+`.env.local`. Values prefixed with `NEXT_PUBLIC_` ship to the client and must
+never contain secrets.
+
+### Checks
+
+```bash
+# backend
+npm run lint
+npm run test
+npm run test:e2e
+
+# frontend
+npm run typecheck
+npm run lint
+npm run build
+```
+
+---
+
+## 📦 MVP Scope
 
 ### Included
 
-* Brand Website
-* Product Catalog
-* Product Details
-* Shopping Cart
-* Checkout
-* Customer Orders
-* Order Management
-* Product Management
-* Category Management
-* Admin Authentication
-* Basic Dashboard
-* Basic Business Reports
-* Customer Data
+- ✅ Brand website
+- ✅ Product catalog with category filter and search
+- ✅ Shopping cart with persistence
+- ✅ Checkout with server-side validation and pricing
+- ✅ Order management with a full lifecycle
+- ✅ Product management (CRUD, images, availability, archive)
+- ✅ Category management
+- ✅ Admin authentication and RBAC
+- ✅ Dashboard statistics
+- ✅ Sales and top-products reports
+- ✅ Customer data and order history
+- ✅ Real-time order notifications
+
+### Still to add before launch
+
+- ⏳ Public order-tracking page (customer looks up a status by order number)
+- ⏳ Standalone cart page
+- ⏳ Product details page
+- ⏳ Automated tests for business-critical flows
+- ⏳ `docs/` — technical specification, database design, API overview
+- ⏳ Production deployment runbook
 
 ### Not Included in the Initial MVP
 
-The following features may be considered in future versions:
+- Online payments
+- Customer accounts
+- Loyalty program
+- Coupons
+- Advanced inventory management
+- Supplier management
+- Multiple branches
+- Map-based delivery tracking
+- WhatsApp API automation
+- Advanced notification systems
 
-* Online Payments
-* Customer Accounts
-* Loyalty Program
-* Coupons
-* Advanced Inventory Management
-* Supplier Management
-* Multiple Branches
-* Map-based Delivery Tracking
-* WhatsApp API Automation
-* Advanced Notification Systems
-
-These features are intentionally outside the initial scope so the
-project can focus on the core business experience and launch quickly.
+These are intentionally outside the initial scope so the project can focus on
+the core business experience and launch quickly.
 
 ---
 
-## 🗺️ Development Roadmap
+## 🗺️ Roadmap
 
-The initial MVP is planned to be completed within approximately
-**7–10 development days**, depending on feedback and final requirements.
+### Phase 1 — Backend Foundation ✅ Complete
 
-### Phase 1 — Backend Foundation
+- Project setup, database design, ERD
+- Authentication, users, roles, permissions
+- Categories, products, image uploads
+- Customers, orders, order lifecycle
+- Dashboard statistics, reports
+- Store settings, health checks
+- Real-time order notifications
+- API documentation
 
-* Project setup
-* Database design
-* ERD
-* Authentication
-* Products
-* Categories
-* Customers
-* Orders
-* Order lifecycle
-* Dashboard statistics
-* Reports
-* API documentation
+### Phase 2 — Customer Website ✅ Complete
 
----
+- Project layout and Torino visual identity
+- Home page, brand sections, contact
+- Product catalog with filters
+- Cart, checkout, order confirmation
 
-### Phase 2 — Customer Website
+### Phase 3 — Admin Dashboard ✅ Complete
 
-* Project layout
-* Torino visual identity
-* Home page
-* Brand sections
-* Product catalog
-* Product details
-* Cart
-* Checkout
-* Order confirmation
-* Order tracking
-* Contact section
+- Admin layout and login
+- Orders, products, categories, customers
+- Dashboard statistics, reports
+- Team management and store settings
 
----
+### Phase 4 — Integration & Polish ⏳ In Progress
 
-### Phase 3 — Admin Dashboard
+- Order tracking and product details pages
+- Loading, empty, and error states
+- Responsive improvements and mobile testing
+- Business flow testing end to end
 
-* Admin layout
-* Orders management
-* Products management
-* Categories management
-* Customer information
-* Dashboard statistics
-* Reports
+### Phase 5 — Feedback & Launch ⏳ Pending
+
+- Internal and client testing
+- Collect real feedback, fix business/UX issues
+- Documentation and deployment
+- MVP release
 
 ---
 
-### Phase 4 — Integration & Polish
+## 📌 Roadmap Priorities
 
-* Frontend/API integration
-* Loading states
-* Empty states
-* Error handling
-* Responsive improvements
-* Mobile testing
-* Business flow testing
+Ordered by business value for the launch:
 
----
-
-### Phase 5 — Feedback & Launch
-
-* Internal testing
-* Torino team testing
-* Collect real feedback
-* Fix business/UX issues
-* Final UI polish
-* Production deployment
-* Final documentation
-
----
-
-## 🗓️ Target Timeline
-
-```text
-Day 1–4
-Backend & API
-
-Day 5–8
-Customer Website + Admin Dashboard
-
-Day 9–10
-Integration + Feedback + Final Polish
-```
-
-The timeline is a target rather than a strict deadline. Business feedback
-or changes in requirements may affect the schedule.
+1. **Public order tracking** — customers can follow their order status.
+2. **Product details page** — richer product presentation and SEO surface.
+3. **Test coverage** — orders, checkout, permissions, and reports.
+4. **Documentation** — `docs/technical-specification.md`, `docs/database-design.md`,
+   `docs/api-overview.md`, `docs/deployment.md`.
+5. **Deployment runbook** — environment setup and release steps.
 
 ---
 
@@ -457,45 +577,9 @@ Examples:
 
 ```text
 feat(orders): implement order creation
-
 fix(cart): prevent invalid quantities
-
 docs(api): document order endpoints
-
 test(orders): add order creation tests
-```
-
----
-
-## 📌 Issue-Driven Development
-
-The project is managed through GitHub Issues.
-
-Each issue should clearly define:
-
-* What needs to be built.
-* Why it is needed.
-* Expected behavior.
-* Acceptance criteria.
-* Related technical considerations.
-
-Example:
-
-```text
-Issue: Implement Order Creation
-
-Goal:
-Allow customers to submit an order from the checkout page.
-
-Acceptance Criteria:
-- Customer can submit valid order data.
-- Products are validated.
-- Product availability is checked.
-- Order items are stored.
-- Product prices are captured at order time.
-- Order total is calculated correctly.
-- A unique order reference is generated.
-- Invalid requests return proper validation errors.
 ```
 
 ---
@@ -504,57 +588,52 @@ Acceptance Criteria:
 
 A task is considered complete when:
 
-* The feature is implemented.
-* Business requirements are satisfied.
-* Input validation is handled.
-* Important error cases are handled.
-* The feature has been manually tested.
-* Relevant automated tests are added when appropriate.
-* No obvious console or runtime errors remain.
-* Documentation is updated when necessary.
-* The related GitHub Issue is updated.
-* The code is committed through the project's Git workflow.
+- The feature is implemented.
+- Business requirements are satisfied.
+- Input validation is handled.
+- Important error cases are handled.
+- The feature has been manually tested.
+- Relevant automated tests are added when appropriate.
+- No obvious console or runtime errors remain.
+- Documentation is updated when necessary.
+- The related GitHub Issue is updated.
+- The code is committed through the project's Git workflow.
 
 ---
 
-## 🔐 Development Principles
+## 📌 Development Principles
 
-The project follows these principles:
-
-* Keep the system simple.
-* Build according to real business needs.
-* Avoid unnecessary complexity.
-* Keep business logic inside the backend.
-* Protect customer and business data.
-* Validate all user input.
-* Never store secrets in the repository.
-* Use database migrations for production changes.
-* Keep the API documented.
-* Prioritize customer experience.
-* Prioritize real feedback over assumptions.
-* Build features that can evolve with Torino.
+- Keep the system simple.
+- Build according to real business needs.
+- Avoid unnecessary complexity.
+- Keep business logic inside the backend.
+- Protect customer and business data.
+- Validate all user input.
+- Never store secrets in the repository.
+- Use database migrations for schema changes.
+- Keep the API documented.
+- Prioritize customer experience.
+- Prioritize real feedback over assumptions.
+- Build features that can evolve with Torino.
 
 ---
 
 ## 💡 AI-Assisted Development
 
-AI development tools may be used during the project, especially for
-frontend implementation, UI development, repetitive tasks, and
-development assistance.
+AI development tools are used during the project, especially for frontend
+implementation, UI development, and repetitive tasks.
 
-AI-generated code will be reviewed and adapted before being integrated
-into the project.
+AI-generated code is reviewed and adapted before being integrated into the
+project.
 
-The business logic, architecture, database design, API contracts, and
-final technical decisions remain controlled by the project developer.
+The business logic, architecture, database design, API contracts, and final
+technical decisions remain controlled by the project developer.
 
 ---
 
 ## 📚 Documentation
 
-Project documentation will be maintained throughout development.
-
-Planned documentation includes:
+Planned documentation lives in `docs/`:
 
 ```text
 docs/
@@ -567,35 +646,10 @@ docs/
 
 ---
 
-## 🚀 Project Status
-
-> 🚧 **MVP — In Development**
-
-Current focus:
-
-```text
-Business Requirements
-        ↓
-ERD & Database Design
-        ↓
-Backend Development
-        ↓
-Frontend Development
-        ↓
-Integration
-        ↓
-Client Feedback
-        ↓
-MVP Release
-```
-
----
-
 ## 🤝 Project
 
-Built for **Torino Dessert** as part of the brand's initial digital
-launch.
+Built for **Torino Dessert** as part of the brand's initial digital launch.
 
-The project is being developed as part of an initial collaboration to
-help Torino establish its digital presence and build a foundation that
-can grow with the business.
+The project is being developed as part of an initial collaboration to help
+Torino establish its digital presence and build a foundation that can grow with
+the business.
