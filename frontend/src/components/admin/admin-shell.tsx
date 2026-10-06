@@ -50,6 +50,83 @@ function LoadingScreen() {
   );
 }
 
+function PendingOrdersCard({
+  count,
+  orders,
+  isLoading,
+  isError,
+}: {
+  count: number;
+  orders: Order[];
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#eee7df] bg-white text-ink shadow-[0_20px_60px_-18px_rgba(45,31,23,0.35)]">
+      <div className="flex items-center justify-between bg-cream/70 px-5 py-4">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-chocolate-light">
+            Order queue
+          </p>
+          <h2 className="mt-1 font-display text-lg font-semibold">
+            Awaiting confirmation
+          </h2>
+        </div>
+        <span className="grid size-10 place-items-center rounded-full bg-white font-semibold text-velvet shadow-sm">
+          {count > 99 ? "99+" : count}
+        </span>
+      </div>
+
+      {isLoading ? (
+        <p className="px-5 py-6 text-sm text-muted">
+          Checking for pending orders…
+        </p>
+      ) : isError ? (
+        <p className="px-5 py-6 text-sm text-velvet">
+          Pending orders could not be loaded.
+        </p>
+      ) : orders.length ? (
+        <ul className="divide-y divide-[#f0ebe6]">
+          {orders.slice(0, 3).map((order) => (
+            <li
+              className="flex items-center justify-between gap-3 px-5 py-3.5"
+              key={order.id}
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">
+                  {order.orderNumber}
+                </p>
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted">
+                  <Clock3 size={12} />
+                  {new Intl.DateTimeFormat("en-EG-u-nu-latn", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  }).format(new Date(order.createdAt))}
+                </p>
+              </div>
+              <span className="shrink-0 text-sm font-semibold text-chocolate">
+                {formatCurrency(order.total)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="px-5 py-6 text-sm text-muted">
+          You’re all caught up. No orders are waiting.
+        </p>
+      )}
+
+      <Link
+        className="flex items-center justify-between border-t border-[#eee7df] px-5 py-3.5 text-sm font-semibold text-velvet transition hover:bg-cream/50"
+        href="/admin/orders"
+      >
+        Open order management
+        <ArrowRight size={16} />
+      </Link>
+    </div>
+  );
+}
+
 export function AdminShell({ children }: { children: ReactNode }) {
   const { user, status, logout, hasPermission } = useAuth();
   const router = useRouter();
@@ -206,14 +283,46 @@ export function AdminShell({ children }: { children: ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             {canReadOrders && (
-              <div className="group relative">
+              <>
+                <div className="group relative hidden lg:block">
+                  <Link
+                    aria-label={
+                      pendingOrderCount
+                        ? `${pendingOrderCount} orders awaiting confirmation`
+                        : "No orders awaiting confirmation"
+                    }
+                    className="relative grid size-10 place-items-center rounded-xl text-chocolate outline-none hover:bg-cream focus-visible:ring-2 focus-visible:ring-velvet"
+                    href="/admin/orders"
+                  >
+                    <Bell size={19} />
+                    {pendingOrderCount > 0 && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-velvet px-1.5 py-0.5 text-[10px] font-bold leading-4 text-white"
+                      >
+                        {pendingOrderCount > 99 ? "99+" : pendingOrderCount}
+                      </span>
+                    )}
+                  </Link>
+                  <div
+                    className="invisible absolute right-0 top-full z-50 w-[min(22rem,calc(100vw-2rem))] translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
+                    role="status"
+                  >
+                    <PendingOrdersCard
+                      count={pendingOrderCount}
+                      orders={pendingOrdersQuery.data?.orders ?? []}
+                      isLoading={pendingOrdersQuery.isLoading}
+                      isError={pendingOrdersQuery.isError}
+                    />
+                  </div>
+                </div>
                 <Link
                   aria-label={
                     pendingOrderCount
                       ? `${pendingOrderCount} orders awaiting confirmation`
                       : "No orders awaiting confirmation"
                   }
-                  className="relative grid size-10 place-items-center rounded-xl text-chocolate outline-none hover:bg-cream focus-visible:ring-2 focus-visible:ring-velvet"
+                  className="relative grid size-10 place-items-center rounded-xl text-chocolate outline-none hover:bg-cream focus-visible:ring-2 focus-visible:ring-velvet lg:hidden"
                   href="/admin/orders"
                 >
                   <Bell size={19} />
@@ -226,77 +335,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
                     </span>
                   )}
                 </Link>
-
-                <div
-                  className="invisible absolute right-0 top-full z-50 w-[min(22rem,calc(100vw-2rem))] translate-y-2 pt-3 opacity-0 transition duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100"
-                  role="status"
-                >
-                  <div className="overflow-hidden rounded-2xl border border-[#eee7df] bg-white text-ink shadow-[0_20px_60px_-18px_rgba(45,31,23,0.35)]">
-                    <div className="flex items-center justify-between bg-cream/70 px-5 py-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-chocolate-light">
-                          Order queue
-                        </p>
-                        <h2 className="mt-1 font-display text-lg font-semibold">
-                          Awaiting confirmation
-                        </h2>
-                      </div>
-                      <span className="grid size-10 place-items-center rounded-full bg-white font-semibold text-velvet shadow-sm">
-                        {pendingOrderCount > 99 ? "99+" : pendingOrderCount}
-                      </span>
-                    </div>
-
-                    {pendingOrdersQuery.isLoading ? (
-                      <p className="px-5 py-6 text-sm text-muted">
-                        Checking for pending orders…
-                      </p>
-                    ) : pendingOrdersQuery.isError ? (
-                      <p className="px-5 py-6 text-sm text-velvet">
-                        Pending orders could not be loaded.
-                      </p>
-                    ) : pendingOrdersQuery.data?.orders.length ? (
-                      <ul className="divide-y divide-[#f0ebe6]">
-                        {pendingOrdersQuery.data.orders
-                          .slice(0, 3)
-                          .map((order: Order) => (
-                            <li
-                              className="flex items-center justify-between gap-3 px-5 py-3.5"
-                              key={order.id}
-                            >
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-semibold">
-                                  {order.orderNumber}
-                                </p>
-                                <p className="mt-1 flex items-center gap-1 text-xs text-muted">
-                                  <Clock3 size={12} />
-                                  {new Intl.DateTimeFormat("en-EG-u-nu-latn", {
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                  }).format(new Date(order.createdAt))}
-                                </p>
-                              </div>
-                              <span className="shrink-0 text-sm font-semibold text-chocolate">
-                                {formatCurrency(order.total)}
-                              </span>
-                            </li>
-                          ))}
-                      </ul>
-                    ) : (
-                      <p className="px-5 py-6 text-sm text-muted">
-                        You’re all caught up. No orders are waiting.
-                      </p>
-                    )}
-
-                    <Link
-                      className="flex items-center justify-between border-t border-[#eee7df] px-5 py-3.5 text-sm font-semibold text-velvet transition hover:bg-cream/50"
-                      href="/admin/orders"
-                    >
-                      Open order management
-                      <ArrowRight size={16} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              </>
             )}
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-ink">{displayName}</p>

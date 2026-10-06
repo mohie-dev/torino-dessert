@@ -52,7 +52,6 @@ export class OrdersGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`Admin disconnected: ${client.id}`);
     }
 
     notifyNewOrder(orderData: any) {
