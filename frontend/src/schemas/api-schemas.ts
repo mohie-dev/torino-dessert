@@ -42,12 +42,25 @@ export const productSchema = z.object({
       (value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-8,
       "Use at most two decimal places.",
     ),
-  imageUrl: z
-    .union([z.string().trim().url().max(500), z.literal("")])
-    .optional()
-    .transform((value) => (value === "" ? undefined : value)),
+  images: z
+    .array(
+      z.object({
+        url: z.string().trim().url("Enter a valid image URL.").max(500),
+        altText: z.string().max(150).optional(),
+        sortOrder: z.number().int().min(0),
+      }),
+    )
+    .max(10, "A product can have up to 10 images."),
+  tagIds: z.array(z.string().uuid()),
   isAvailable: z.boolean(),
   categoryId: z.string().uuid("Choose a category."),
+});
+
+export const tagSchema = z.object({
+  name: z.string().trim().min(1, "Tag name is required.").max(50),
+  colorHex: z
+    .string()
+    .regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Choose a valid tag color."),
 });
 
 export const categorySchema = z.object({
@@ -123,6 +136,8 @@ export type UpdateSettingsInput = z.input<typeof updateSettingsSchema>;
 export type UpdateSettingsValues = z.output<typeof updateSettingsSchema>;
 export type ProductInput = z.input<typeof productSchema>;
 export type ProductValues = z.output<typeof productSchema>;
+export type TagInput = z.input<typeof tagSchema>;
+export type TagValues = z.output<typeof tagSchema>;
 export type CategoryInput = z.input<typeof categorySchema>;
 export type CategoryValues = z.output<typeof categorySchema>;
 export type CreateUserInput = z.input<typeof createUserSchema>;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Minus, Plus, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
@@ -26,6 +26,7 @@ export function CheckoutForm() {
   const router = useRouter();
   const items = useCartStore((state) => state.items);
   const setQuantity = useCartStore((state) => state.setQuantity);
+  const removeItem = useCartStore((state) => state.removeItem);
   const clearCart = useCartStore((state) => state.clearCart);
   const notify = useUIStore((state) => state.notify);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -220,9 +221,20 @@ export function CheckoutForm() {
                       </button>
                     </div>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-chocolate">
-                    {formatCurrency(Number(product.price) * quantity)}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-semibold text-chocolate">
+                      {formatCurrency(Number(product.price) * quantity)}
+                    </span>
+                    <button
+                      aria-label={`Remove ${product.name} from bag`}
+                      className="grid size-9 place-items-center rounded-full text-muted transition hover:bg-red-50 hover:text-velvet focus:outline-none focus:ring-2 focus:ring-velvet/50"
+                      onClick={() => removeItem(product.id)}
+                      title={`Remove ${product.name}`}
+                      type="button"
+                    >
+                      <Trash2 aria-hidden="true" size={16} />
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>

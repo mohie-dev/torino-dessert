@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { DataSource } from 'typeorm';
-import { dataSourceOptions } from '../config/data-source.js'; // تأكد من المسار عندك
+import { dataSourceOptions } from '../config/data-source.js';
 import { Category } from '../modules/categories/entities/category.entity.js';
 import { Product } from '../modules/products/entities/product.entity.js';
 
@@ -37,7 +37,8 @@ async function seedProducts() {
                 name: 'جاتوه شيكولاتة',
                 description: 'قطعة جاتوه شيكولاتة غنية بالكريمة',
                 price: 35.00,
-                imageUrl: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806645/torino-dessert/pmhurjwopxbuqt56zs3d.jpg',
+                // 👈 التعديل هنا: تحويل imageUrl إلى مصفوفة صور
+                images: [{ url: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806645/torino-dessert/pmhurjwopxbuqt56zs3d.jpg', sortOrder: 0 }],
                 category: category1,
                 isAvailable: true,
             },
@@ -45,7 +46,8 @@ async function seedProducts() {
                 name: 'تورتة فواكه مقاس 24',
                 description: 'تورتة فانيليا مزينة بالفواكه',
                 price: 350.00,
-                imageUrl: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806794/torino-dessert/nfwxlcysnvubl0vgbjbq.jpg',
+                // 👈 التعديل هنا
+                images: [{ url: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806794/torino-dessert/nfwxlcysnvubl0vgbjbq.jpg', sortOrder: 0 }],
                 category: category2,
                 isAvailable: true,
             },
@@ -53,7 +55,7 @@ async function seedProducts() {
                 name: 'تشيز كيك فراولة',
                 description: 'شريحة تشيز كيك نيويورك',
                 price: 55.00,
-                imageUrl: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806794/torino-dessert/nfwxlcysnvubl0vgbjbq.jpg',
+                images: [{ url: 'https://res.cloudinary.com/ulbm5bpm/image/upload/v1790806794/torino-dessert/nfwxlcysnvubl0vgbjbq.jpg', sortOrder: 0 }],
                 category: category3,
                 isAvailable: true,
             },

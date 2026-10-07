@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus, LoaderCircle, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { ConfirmationDialog } from "@/components/admin/confirmation-dialog";
 import { AccessNotice, DataError } from "@/components/admin/admin-feedback";
 import { useAuth } from "@/contexts/auth-context";
@@ -12,25 +12,33 @@ import {
   archiveProduct,
   createCategory,
   createProduct,
+  createTag,
+  deleteTag,
   deactivateCategory,
   fetchAdminCategories,
   fetchAdminProducts,
+  fetchTags,
+  getProductImageUrl,
   restoreProduct,
   toggleProductAvailability,
   updateCategory,
   updateProduct,
-  uploadProductImage,
+  uploadProductImages,
   type Category,
   type Product,
+  type Tag,
 } from "@/lib/store-api";
 import { formatCurrency } from "@/lib/format";
 import {
   categorySchema,
   productSchema,
+  tagSchema,
   type CategoryInput,
   type CategoryValues,
   type ProductInput,
   type ProductValues,
+  type TagInput,
+  type TagValues,
 } from "@/schemas/api-schemas";
 import { useUIStore } from "@/stores/ui-store";
 
@@ -48,6 +56,7 @@ export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [tagColor, setTagColor] = useState("#A41C23");
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [confirmation, setConfirmation] = useState<{
@@ -79,6 +88,11 @@ export default function AdminProductsPage() {
   const categoriesQuery = useQuery({
     queryKey: ["admin", "categories"],
     queryFn: fetchAdminCategories,
+    enabled: canRead,
+  });
+  const tagsQuery = useQuery({
+    queryKey: ["admin", "tags"],
+    queryFn: fetchTags,
     enabled: canRead,
   });
 
@@ -120,6 +134,17 @@ export default function AdminProductsPage() {
     onError: (error) =>
       notify("error", error instanceof Error ? error.message : "Could not save category."),
   });
+  const tagMutation = useMutation({
+    mutationFn: (values: TagValues) => createTag(values),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin", "tags"] });
+      await queryClient.invalidateQueries({ queryKey: ["storefront", "products"] });
+      notify("success", "Product tag created.");
+      tagForm.reset({ name: "", colorHex: tagColor });
+    },
+    onError: (error) =>
+      notify("error", error instanceof Error ? error.message : "Could not create tag."),
+  });
 
   const product = useForm<ProductInput, unknown, ProductValues>({
     resolver: zodResolver(productSchema),
@@ -127,14 +152,20 @@ export default function AdminProductsPage() {
       name: "",
       description: "",
       price: 0,
-      imageUrl: "",
+      images: [],
+      tagIds: [],
       isAvailable: true,
       categoryId: "",
     },
   });
+  const productImages = useFieldArray({ control: product.control, name: "images" });
   const category = useForm<CategoryInput, unknown, CategoryValues>({
     resolver: zodResolver(categorySchema),
     defaultValues: { name: "", description: "", isActive: true },
+  });
+  const tagForm = useForm<TagInput, unknown, TagValues>({
+    resolver: zodResolver(tagSchema),
+    defaultValues: { name: "", colorHex: tagColor },
   });
   const [uploading, setUploading] = useState(false);
 
@@ -161,7 +192,12 @@ export default function AdminProductsPage() {
             name: productToEdit.name,
             description: productToEdit.description ?? "",
             price: Number(productToEdit.price),
-            imageUrl: productToEdit.imageUrl ?? "",
+            images: (productToEdit.images ?? []).map((image, index) => ({
+              url: image.url,
+              altText: image.altText ?? "",
+              sortOrder: image.sortOrder ?? index,
+            })),
+            tagIds: (productToEdit.tags ?? []).map((tag) => tag.id),
             isAvailable: productToEdit.isAvailable,
             categoryId:
               productToEdit.categoryId || productToEdit.category?.id || "",
@@ -170,7 +206,8 @@ export default function AdminProductsPage() {
             name: "",
             description: "",
             price: 0,
-            imageUrl: "",
+            images: [],
+            tagIds: [],
             isAvailable: true,
             categoryId: "",
           },
@@ -193,7 +230,12 @@ export default function AdminProductsPage() {
       name: values.name,
       description: values.description,
       price: values.price,
-      imageUrl: values.imageUrl,
+      images: values.images.map((image, index) => ({
+        ...image,
+        altText: image.altText?.trim() || undefined,
+        sortOrder: index,
+      })),
+      tagIds: values.tagIds,
       isAvailable: values.isAvailable,
       categoryId,
     };
@@ -344,8 +386,8 @@ export default function AdminProductsPage() {
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="relative size-12 shrink-0 overflow-hidden rounded-xl bg-cream">
-                          {item.imageUrl ? (
-                            <img alt="" className="h-full w-full object-cover" decoding="async" loading="lazy" referrerPolicy="no-referrer" src={item.imageUrl} />
+                          {getProductImageUrl(item) ? (
+                            <img alt="" className="h-full w-full object-cover" decoding="async" loading="lazy" referrerPolicy="no-referrer" src={getProductImageUrl(item) ?? undefined} />
                           ) : <span className="grid h-full place-items-center font-display text-xl text-chocolate/50">T</span>}
                         </div>
                         <div className="min-w-0">
@@ -544,6 +586,109 @@ export default function AdminProductsPage() {
         ) : null}
       </section>
 
+      <section className="mt-8 rounded-3xl border border-[#eee7df] bg-surface p-5 shadow-card sm:p-7">
+        <div>
+          <h2 className="font-display text-2xl font-semibold text-ink">Product tags</h2>
+          <p className="mt-1 text-sm text-muted">Highlight menu items with labels such as bestseller, seasonal, or new.</p>
+        </div>
+        {canCreate && (
+          <form
+            className="mt-5 flex flex-col gap-3 rounded-2xl bg-cream/60 p-4 sm:flex-row sm:items-end"
+            onSubmit={tagForm.handleSubmit((values) => tagMutation.mutate(values))}
+            noValidate
+          >
+            <label className="flex-1 text-sm font-medium text-ink">
+              Tag name
+              <input
+                className={inputClass}
+                maxLength={50}
+                placeholder="e.g. Bestseller"
+                {...tagForm.register("name")}
+              />
+              {tagForm.formState.errors.name && (
+                <span className="mt-1 block text-xs text-velvet">{tagForm.formState.errors.name.message}</span>
+              )}
+            </label>
+            <label className="text-sm font-medium text-ink">
+              Tag color
+              <span className="mt-2 flex h-11 items-center gap-2 rounded-xl border border-cream-dark bg-white px-3">
+                <input
+                  aria-label="Tag color"
+                  className="size-7 cursor-pointer rounded border-0 bg-transparent p-0"
+                  onChange={(event) => {
+                    setTagColor(event.target.value);
+                    tagForm.setValue("colorHex", event.target.value, { shouldValidate: true });
+                  }}
+                  type="color"
+                  value={tagColor}
+                />
+                <span className="text-xs font-medium uppercase text-muted">{tagColor}</span>
+              </span>
+              {tagForm.formState.errors.colorHex && (
+                <span className="mt-1 block text-xs text-velvet">{tagForm.formState.errors.colorHex.message}</span>
+              )}
+            </label>
+            <button
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-chocolate px-4 text-sm font-semibold text-white hover:bg-chocolate-dark disabled:opacity-50"
+              disabled={tagMutation.isPending}
+              type="submit"
+            >
+              {tagMutation.isPending ? <LoaderCircle className="animate-spin" size={16} /> : <Plus size={16} />}
+              Create tag
+            </button>
+          </form>
+        )}
+        {tagsQuery.isError && <DataError onRetry={() => void tagsQuery.refetch()} />}
+        {tagsQuery.isLoading ? (
+          <div className="mt-5 h-16 animate-pulse rounded-2xl bg-cream" />
+        ) : tagsQuery.data?.length ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {tagsQuery.data.map((tag) => (
+              <div
+                className="inline-flex items-center gap-2 rounded-full border border-cream-dark bg-white py-1.5 pl-3 pr-1.5"
+                key={tag.id}
+              >
+                <span className="size-2.5 rounded-full" style={{ backgroundColor: tag.colorHex ?? "#7A4016" }} />
+                <span className="text-sm font-medium text-ink">{tag.name}</span>
+                {canDelete && (
+                  <button
+                    aria-label={`Delete ${tag.name} tag`}
+                    className="grid size-7 place-items-center rounded-full text-muted hover:bg-velvet/10 hover:text-velvet"
+                    onClick={() =>
+                      askThenRun(
+                        "Delete product tag?",
+                        `“${tag.name}” will be removed from all products using it.`,
+                        "Delete tag",
+                        () => {
+                          void deleteTag(tag.id)
+                            .then(async () => {
+                              await queryClient.invalidateQueries({ queryKey: ["admin", "tags"] });
+                              await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+                              await queryClient.invalidateQueries({ queryKey: ["storefront", "products"] });
+                              notify("success", "Product tag deleted.");
+                            })
+                            .catch((error: unknown) =>
+                              notify("error", error instanceof Error ? error.message : "Product tag could not be deleted."),
+                            );
+                        },
+                      )
+                    }
+                    type="button"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-5 rounded-2xl bg-cream/60 px-4 py-3 text-sm text-muted">No product tags yet.</p>
+        )}
+        {!canCreate && (
+          <p className="mt-3 text-xs text-muted">Creating tags requires product-create permission.</p>
+        )}
+      </section>
+
       {productDialogOpen && (
         <div className="fixed inset-0 z-[70] grid place-items-center overflow-y-auto bg-ink/50 p-4" role="presentation">
           <section aria-labelledby="product-dialog-title" aria-modal="true" className="my-8 max-h-[calc(100vh-4rem)] w-full max-w-2xl overflow-y-auto rounded-3xl bg-surface p-5 shadow-elevated sm:p-8" role="dialog">
@@ -618,45 +763,191 @@ export default function AdminProductsPage() {
                   Description <span className="font-normal text-muted">(optional)</span>
                   <textarea className={`${inputClass} min-h-20 resize-y`} {...product.register("description")} />
                 </label>
-                <div className="sm:col-span-2">
-                  <label className="text-sm font-medium text-ink" htmlFor="product-image-url">Product image</label>
-                  <input className={inputClass} id="product-image-url" placeholder="https://…" type="url" {...product.register("imageUrl")} />
-                  {product.formState.errors.imageUrl && <p className="mt-1 text-xs text-velvet">{product.formState.errors.imageUrl.message}</p>}
-                  <label className={`mt-2 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cream-dark px-3 py-2 text-xs font-semibold text-chocolate hover:bg-cream ${!canCreate ? "cursor-not-allowed opacity-50" : ""}`}>
-                    {uploading ? <LoaderCircle className="animate-spin" size={15} /> : <ImagePlus size={15} />}
-                    {uploading ? "Uploading…" : "Upload image (PNG/JPEG/WebP, max 5 MB)"}
-                    <input
-                      accept="image/png,image/jpeg,image/webp"
-                      className="sr-only"
-                      disabled={!canCreate || uploading}
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = "";
-                        if (!file) return;
-                        if (file.size > 5 * 1024 * 1024) {
-                          notify("error", "Image must be 5 MB or smaller.");
-                          return;
+                <div className="space-y-3 sm:col-span-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-semibold text-ink">Product photos</h3>
+                      <p className="mt-1 text-xs text-muted">Add up to 10 photos. The first photo is shown on the menu.</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="inline-flex items-center gap-2 rounded-xl border border-cream-dark px-3 py-2 text-xs font-semibold text-chocolate hover:bg-cream disabled:opacity-50"
+                        disabled={productImages.fields.length >= 10}
+                        onClick={() =>
+                          productImages.append({
+                            url: "",
+                            altText: "",
+                            sortOrder: productImages.fields.length,
+                          })
                         }
-                        setUploading(true);
-                        try {
-                          product.setValue("imageUrl", await uploadProductImage(file), {
-                            shouldDirty: true,
-                            shouldValidate: true,
-                          });
-                          notify("success", "Image uploaded.");
-                        } catch (error) {
-                          notify("error", error instanceof Error ? error.message : "Image upload failed.");
-                        } finally {
-                          setUploading(false);
-                        }
-                      }}
-                      type="file"
-                    />
-                  </label>
+                        type="button"
+                      >
+                        <Plus size={14} /> Add image URL
+                      </button>
+                      <label className={`inline-flex cursor-pointer items-center gap-2 rounded-xl border border-cream-dark px-3 py-2 text-xs font-semibold text-chocolate hover:bg-cream ${!canCreate || uploading || productImages.fields.length >= 10 ? "cursor-not-allowed opacity-50" : ""}`}>
+                        {uploading ? <LoaderCircle className="animate-spin" size={15} /> : <ImagePlus size={15} />}
+                        {uploading ? "Uploading…" : "Upload photos"}
+                        <input
+                          accept="image/png,image/jpeg,image/webp"
+                          className="sr-only"
+                          disabled={!canCreate || uploading || productImages.fields.length >= 10}
+                          multiple
+                          onChange={async (event) => {
+                            const files = Array.from(event.target.files ?? []);
+                            event.target.value = "";
+                            if (!files.length) return;
+                            if (productImages.fields.length + files.length > 10) {
+                              notify("error", "A product can have up to 10 photos.");
+                              return;
+                            }
+                            const oversized = files.find((file) => file.size > 5 * 1024 * 1024);
+                            if (oversized) {
+                              notify("error", `${oversized.name} is larger than 5 MB.`);
+                              return;
+                            }
+                            setUploading(true);
+                            try {
+                              const urls = await uploadProductImages(files);
+                              if (urls.length !== files.length) {
+                                throw new Error("The server did not return a URL for every uploaded photo.");
+                              }
+                              urls.forEach((url, index) =>
+                                productImages.append({
+                                  url,
+                                  altText: "",
+                                  sortOrder: productImages.fields.length + index,
+                                }),
+                              );
+                              notify("success", `${urls.length} photo${urls.length === 1 ? "" : "s"} uploaded.`);
+                            } catch (error) {
+                              notify("error", error instanceof Error ? error.message : "Photo upload failed.");
+                            } finally {
+                              setUploading(false);
+                            }
+                          }}
+                          type="file"
+                        />
+                      </label>
+                    </div>
+                  </div>
                   {!canCreate && (
-                    <p className="mt-1 text-xs text-muted">Image uploads require product-create permission in the current API.</p>
+                    <p className="text-xs text-muted">Photo uploads require product-create permission in the current API.</p>
+                  )}
+                  {product.formState.errors.images?.root?.message && (
+                    <p className="text-xs text-velvet">{product.formState.errors.images.root.message}</p>
+                  )}
+                  {productImages.fields.length > 0 && (
+                    <div className="space-y-3">
+                      {productImages.fields.map((field, index) => (
+                        <div className="grid gap-3 rounded-2xl border border-cream-dark bg-white p-3 sm:grid-cols-[76px_minmax(0,1fr)_auto]" key={field.id}>
+                          <div className="aspect-square overflow-hidden rounded-xl bg-cream">
+                            {product.watch(`images.${index}.url`) ? (
+                              <img
+                                alt=""
+                                className="h-full w-full object-cover"
+                                src={product.watch(`images.${index}.url`)}
+                              />
+                            ) : (
+                              <span className="grid h-full place-items-center text-xs text-muted">Preview</span>
+                            )}
+                          </div>
+                          <div className="space-y-2">
+                            <label className="block text-xs font-medium text-ink">
+                              Image URL
+                              <input
+                                className="mt-1 w-full rounded-lg border border-cream-dark px-3 py-2 text-xs"
+                                placeholder="https://…"
+                                type="url"
+                                {...product.register(`images.${index}.url`)}
+                              />
+                              {product.formState.errors.images?.[index]?.url && (
+                                <span className="mt-1 block text-xs text-velvet">
+                                  {product.formState.errors.images[index]?.url?.message}
+                                </span>
+                              )}
+                            </label>
+                            <label className="block text-xs font-medium text-ink">
+                              Accessibility description <span className="font-normal text-muted">(optional)</span>
+                              <input
+                                className="mt-1 w-full rounded-lg border border-cream-dark px-3 py-2 text-xs"
+                                maxLength={150}
+                                placeholder="Describe the photo"
+                                {...product.register(`images.${index}.altText`)}
+                              />
+                            </label>
+                          </div>
+                          <div className="flex items-start justify-end gap-1">
+                            <button
+                              aria-label={`Move photo ${index + 1} up`}
+                              className="grid size-8 place-items-center rounded-lg text-chocolate hover:bg-cream disabled:opacity-30"
+                              disabled={index === 0}
+                              onClick={() => productImages.swap(index, index - 1)}
+                              type="button"
+                            >
+                              <ArrowUp size={15} />
+                            </button>
+                            <button
+                              aria-label={`Move photo ${index + 1} down`}
+                              className="grid size-8 place-items-center rounded-lg text-chocolate hover:bg-cream disabled:opacity-30"
+                              disabled={index === productImages.fields.length - 1}
+                              onClick={() => productImages.swap(index, index + 1)}
+                              type="button"
+                            >
+                              <ArrowDown size={15} />
+                            </button>
+                            <button
+                              aria-label={`Remove photo ${index + 1}`}
+                              className="grid size-8 place-items-center rounded-lg text-velvet hover:bg-velvet/5"
+                              onClick={() => productImages.remove(index)}
+                              type="button"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
+                <fieldset className="space-y-2 sm:col-span-2">
+                  <legend className="text-sm font-semibold text-ink">Tags</legend>
+                  {tagsQuery.isError ? (
+                    <button
+                      className="text-xs font-semibold text-velvet underline"
+                      onClick={() => void tagsQuery.refetch()}
+                      type="button"
+                    >
+                      Could not load tags. Retry
+                    </button>
+                  ) : tagsQuery.data?.length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {tagsQuery.data.map((tag: Tag) => {
+                        const selectedTags = product.watch("tagIds") ?? [];
+                        return (
+                          <label
+                            className={`inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-xs font-semibold transition ${
+                              selectedTags.includes(tag.id)
+                                ? "border-chocolate/30 bg-cream text-chocolate"
+                                : "border-cream-dark bg-white text-muted hover:bg-cream/50"
+                            }`}
+                            key={tag.id}
+                          >
+                            <input
+                              className="size-3.5 accent-velvet"
+                              type="checkbox"
+                              value={tag.id}
+                              {...product.register("tagIds")}
+                            />
+                            <span className="size-2.5 rounded-full" style={{ backgroundColor: tag.colorHex ?? "#7A4016" }} />
+                            {tag.name}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted">Create tags above to add them to products.</p>
+                  )}
+                </fieldset>
                 <label className="flex items-center gap-3 rounded-xl bg-cream/70 px-4 py-3 text-sm font-medium text-ink sm:col-span-2">
                   <input className="size-4 accent-velvet" type="checkbox" {...product.register("isAvailable")} />
                   Available to order

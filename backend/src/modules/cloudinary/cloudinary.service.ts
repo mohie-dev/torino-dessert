@@ -23,4 +23,9 @@ export class CloudinaryService {
             bufferStream.pipe(upload);
         });
     }
+
+    async uploadMultipleImages(files: Express.Multer.File[]) {
+        const uploadPromises = files.map(file => this.uploadImage(file));
+        return await Promise.all(uploadPromises);
+    }
 }

@@ -6,14 +6,34 @@ export interface Product {
   name: string;
   description: string | null;
   price: number | string;
-  imageUrl: string | null;
+  portionSize: string | null;
+  images?: ProductImage[];
+  tags?: Tag[];
+  imageUrl?: string | null;
   isAvailable: boolean;
   isArchived: boolean;
   categoryId: string;
   category?: Category;
 }
 
+export interface ProductImage {
+  id?: string;
+  url: string;
+  altText?: string | null;
+  sortOrder: number;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+  colorHex: string | null;
+}
+
 export type ProductWritePayload = ProductValues;
+
+export function getProductImageUrl(product: Product): string | null {
+  return product.images?.[0]?.url ?? product.imageUrl ?? null;
+}
 
 export interface Category {
   id: string;
@@ -68,6 +88,11 @@ export async function fetchStorefrontProducts(params?: {
   return response.data;
 }
 
+export async function fetchStorefrontProduct(id: string): Promise<Product> {
+  const response = await api.get<Product>(`/products/storefront/${id}`);
+  return response.data;
+}
+
 export async function fetchStoreSettings(): Promise<StoreSettings> {
   const response = await api.get<StoreSettings>("/settings");
   return response.data;
@@ -83,6 +108,23 @@ export async function submitOrder(
 export async function fetchAdminCategories(): Promise<Category[]> {
   const response = await api.get<Category[]>("/categories");
   return response.data;
+}
+
+export async function fetchTags(): Promise<Tag[]> {
+  const response = await api.get<Tag[]>("/tags");
+  return response.data;
+}
+
+export async function createTag(payload: {
+  name: string;
+  colorHex?: string;
+}): Promise<Tag> {
+  const response = await api.post<Tag>("/tags", payload);
+  return response.data;
+}
+
+export async function deleteTag(id: string): Promise<void> {
+  await api.delete(`/tags/${id}`);
 }
 
 export async function fetchAdminProducts(params?: {
@@ -149,6 +191,20 @@ export async function uploadProductImage(file: File): Promise<string> {
     timeout: 60_000,
   });
   return response.data.imageUrl;
+}
+
+export async function uploadProductImages(files: File[]): Promise<string[]> {
+  const body = new FormData();
+  files.forEach((file) => body.append("files", file));
+  const response = await api.post<{ imageUrls: string[] }>(
+    "/upload/images",
+    body,
+    {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 60_000,
+    },
+  );
+  return response.data.imageUrls;
 }
 
 export async function createCategory(
